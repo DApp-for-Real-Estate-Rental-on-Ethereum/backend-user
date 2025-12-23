@@ -1,6 +1,5 @@
 package org.example.userservice.model;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.userservice.enums.UserRoleEnum;
@@ -9,7 +8,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-
 
 @Entity
 @Table(name = "users")
@@ -74,4 +72,3 @@ public class User implements Serializable {
         return firstName + " " + lastName;
     }
 }
-
