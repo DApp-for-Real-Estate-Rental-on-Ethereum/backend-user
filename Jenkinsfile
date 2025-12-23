@@ -137,6 +137,8 @@ pipeline {
                     docker rmi localhost:5000/real-estate-user-service:${BUILD_NUMBER} || true
                 """
             }
+            // Clean workspace
+            deleteDir()
         }
         success {
             echo "User-service pipeline completed successfully! 🎉"
