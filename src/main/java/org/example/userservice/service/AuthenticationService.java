@@ -54,7 +54,7 @@ public class AuthenticationService implements IAuthenticationService {
         validateUserForRegistering(input);
 
         User user = buildNewUser(input);
-        
+
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             user.setRoles(Set.of(UserRoleEnum.TENANT));
         }
@@ -65,8 +65,7 @@ public class AuthenticationService implements IAuthenticationService {
             emailService.sendWelcomeEmail(
                     savedUser.getId(),
                     savedUser.getFullName(),
-                    savedUser.getEmail()
-            );
+                    savedUser.getEmail());
         } catch (Exception e) {
         }
 
@@ -76,16 +75,14 @@ public class AuthenticationService implements IAuthenticationService {
                     savedUser.getEmail(),
                     savedUser.getFullName(),
                     savedUser.getVerificationCode(),
-                    savedUser.getVerificationCodeExpiresAt()
-            );
+                    savedUser.getVerificationCodeExpiresAt());
         } catch (Exception e) {
         }
     }
 
     public LoginUserResponseDTO login(LoginUserRequestDTO input) {
         User user = userRepository.findByEmail(input.getEmail()).orElseThrow(
-                () -> new UserNotFoundException("User Not Found!")
-        );
+                () -> new UserNotFoundException("User Not Found!"));
 
         if (!checkHashPassword(user.getPassword(), input.getPassword())) {
             throw new WrongPasswordException("Wrong password!");
@@ -96,7 +93,8 @@ public class AuthenticationService implements IAuthenticationService {
         }
 
         HashMap<String, Object> roleClaim = new HashMap<>();
-        roleClaim.put("roles", user.getRoles());
+        roleClaim.put("roles", user.getRoles().stream().map(role -> "ROLE_" + role.name())
+                .collect(java.util.stream.Collectors.toList()));
         String token = jWTService.generateToken(roleClaim, user);
 
         return new LoginUserResponseDTO(token, jWTService.getExpirationTime());
@@ -169,8 +167,8 @@ public class AuthenticationService implements IAuthenticationService {
     }
 
     public void validateResetPasswordToken(String token) {
-        Optional<PasswordResetToken> optionalPasswordResetToken =
-                passwordResetTokenRepository.findByToken(hashToken(token));
+        Optional<PasswordResetToken> optionalPasswordResetToken = passwordResetTokenRepository
+                .findByToken(hashToken(token));
 
         if (optionalPasswordResetToken.isPresent()) {
             PasswordResetToken passwordResetToken = optionalPasswordResetToken.get();
@@ -194,9 +192,8 @@ public class AuthenticationService implements IAuthenticationService {
     public void validateResetPasswordCode(String email, String code) {
         User user = findUserByEmail(email);
         String hashedCode = hashToken(code);
-        
-        Optional<PasswordResetToken> optionalPasswordResetToken =
-                passwordResetTokenRepository.findByToken(hashedCode);
+
+        Optional<PasswordResetToken> optionalPasswordResetToken = passwordResetTokenRepository.findByToken(hashedCode);
 
         if (optionalPasswordResetToken.isPresent()) {
             PasswordResetToken passwordResetToken = optionalPasswordResetToken.get();
@@ -223,9 +220,8 @@ public class AuthenticationService implements IAuthenticationService {
 
     @Transactional
     public void changePassword(ResetPasswordRequestDTO input) {
-        Optional<PasswordResetToken> optionalPasswordResetToken =
-                passwordResetTokenRepository
-                        .findByToken(hashToken(input.getToken()));
+        Optional<PasswordResetToken> optionalPasswordResetToken = passwordResetTokenRepository
+                .findByToken(hashToken(input.getToken()));
 
         if (optionalPasswordResetToken.isPresent()) {
             PasswordResetToken passwordResetToken = optionalPasswordResetToken.get();
@@ -254,10 +250,9 @@ public class AuthenticationService implements IAuthenticationService {
     @Transactional
     public void resetPasswordWithCode(String email, String code, String newPassword) {
         validateResetPasswordCode(email, code);
-        
+
         String hashedCode = hashToken(code);
-        Optional<PasswordResetToken> optionalPasswordResetToken =
-                passwordResetTokenRepository.findByToken(hashedCode);
+        Optional<PasswordResetToken> optionalPasswordResetToken = passwordResetTokenRepository.findByToken(hashedCode);
 
         if (optionalPasswordResetToken.isPresent()) {
             PasswordResetToken passwordResetToken = optionalPasswordResetToken.get();
@@ -325,8 +320,7 @@ public class AuthenticationService implements IAuthenticationService {
 
     private User findUserByEmail(String email) {
         return userRepository.findByEmail(email).orElseThrow(
-                () -> new UserNotFoundException("User Not Found with email: " + email)
-        );
+                () -> new UserNotFoundException("User Not Found with email: " + email));
     }
 
     private String generateVerificationCode() {
