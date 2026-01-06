@@ -42,8 +42,7 @@ public class UserService {
                 user.getPhoneNumber(),
                 walletAddr,
                 user.getRoles() != null ? user.getRoles() : new HashSet<>(),
-                user.getScore() != null ? user.getScore() : 100
-        );
+                user.getScore() != null ? user.getScore() : 100);
     }
 
     public UserPublicProfileResponseDTO findUserById(Long id) {
@@ -58,6 +57,17 @@ public class UserService {
                 .build();
     }
 
+    public org.example.userservice.dto.responses.UserStatsDTO getUserStats(Long id) {
+        User user = findById(id);
+        return org.example.userservice.dto.responses.UserStatsDTO.builder()
+                .id(user.getId())
+                .rating(user.getRating())
+                .score(user.getScore())
+                .createdAt(user.getCreatedAt())
+                .isVerified(user.isEnabled())
+                .build();
+    }
+
     @Transactional
     public void updateMe(UpdateUserRequestDTO input, Long id) {
         User user = findById(id);
@@ -66,17 +76,20 @@ public class UserService {
 
         nonEmpty(input.getFirstName()).ifPresent(user::setFirstName);
         nonEmpty(input.getLastName()).ifPresent(user::setLastName);
-        
+
         if (input.getWalletAddress() != null) {
             String newWalletAddress = input.getWalletAddress().trim();
-            
+
             if (!newWalletAddress.isEmpty() && !newWalletAddress.matches("^0x[a-fA-F0-9]{40}$")) {
-                throw new IllegalArgumentException("Wallet address must be a valid Ethereum address (0x followed by 40 hex characters)");
+                throw new IllegalArgumentException(
+                        "Wallet address must be a valid Ethereum address (0x followed by 40 hex characters)");
             }
-            
+
             String processedWalletAddress = newWalletAddress.isEmpty() ? null : newWalletAddress;
-            
-            String oldProcessed = (oldWalletAddress != null && !oldWalletAddress.trim().isEmpty()) ? oldWalletAddress.trim() : null;
+
+            String oldProcessed = (oldWalletAddress != null && !oldWalletAddress.trim().isEmpty())
+                    ? oldWalletAddress.trim()
+                    : null;
             if (!java.util.Objects.equals(processedWalletAddress, oldProcessed)) {
                 user.setWalletAddress(processedWalletAddress);
                 walletAddressChanged = true;
@@ -88,9 +101,9 @@ public class UserService {
                     userValidationService.validateIsAdult(b);
                     user.setBirthday(b);
                 });
-        
+
         userRepository.save(user);
-        
+
         if (walletAddressChanged) {
             try {
                 UserProfileUpdateRequestDTO updateRequest = new UserProfileUpdateRequestDTO();
@@ -122,7 +135,7 @@ public class UserService {
                     if (walletAddr != null && walletAddr.trim().isEmpty()) {
                         walletAddr = null;
                     }
-                    
+
                     return AdminUserResponseDTO.builder()
                             .id(user.getId())
                             .firstName(user.getFirstName())
@@ -143,19 +156,18 @@ public class UserService {
 
     public User findById(Long id) {
         return userRepository.findById(id).orElseThrow(
-                () -> new UserNotFoundException("User not found with id: " + id)
-        );
+                () -> new UserNotFoundException("User not found with id: " + id));
     }
 
     @Transactional
     public void addHostRole(Long id) {
         User user = findById(id);
-        
+
         Set<UserRoleEnum> newRoles = new HashSet<>();
         newRoles.add(UserRoleEnum.HOST);
         user.setRoles(newRoles);
         userRepository.save(user);
-        
+
         try {
             UserProfileUpdateRequestDTO updateRequest = new UserProfileUpdateRequestDTO();
             updateRequest.setUserId(id.toString());

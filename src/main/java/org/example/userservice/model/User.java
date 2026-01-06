@@ -68,6 +68,14 @@ public class User implements Serializable {
     @Builder.Default
     private Integer score = 100;
 
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+
     public String getFullName() {
         return firstName + " " + lastName;
     }
